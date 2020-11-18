@@ -1,0 +1,275 @@
+swagger: "2.0"
+info:
+  description: "Сервіс переказу коштів між користувачами, кожен користувач має власнии? гаманець та можливість переказувати чи отримувати кошти від іншого користувача"
+  version: "2.2.8"
+  title: "Swagger Bank"
+host: "petstore.swagger.io"
+basePath: "/v2"
+tags:
+- name: "user"
+  description: "Operations about user"
+- name: "wallet"
+  description: "Operations about wallets"
+- name: "pay"
+  description: "Payments"
+schemes:
+- "http"
+paths:
+  /user:
+    post:
+      tags:
+      - "user"
+      summary: "Create user"
+      description: "User creation interface "
+      operationId: "create_user"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "login"
+        in: "query"
+        description: "Login of new user"
+        required: true
+        type: "string"
+      - name: "pwd"
+        in: "query"
+        description: "Password of new user"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "successful operation"
+        405:
+          description: "invalid input"
+  /user/login:
+    get:
+      tags:
+      - "user"
+      summary: "Log in users"
+      description: ""
+      operationId: "login_user"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "login"
+        in: "query"
+        description: "Login of existing user"
+        required: true
+        type: "string"
+      - name: "pwd"
+        in: "query"
+        description: "Password of existing user"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+        "400":
+          description: "Wrong username or pass"
+  /user/logout:
+    get:
+      tags:
+      - "user"
+      summary: "Logs out user"
+      description: ""
+      operationId: "logout_user"
+      produces:
+      - "application/xml"
+      - "application/json"
+      parameters: []
+      responses:
+        default:
+          description: "successful operation"
+  /user/{login}:
+    get:
+      tags:
+      - "user"
+      summary: "Gets user by login"
+      description: ""
+      operationId: "get_user_by_name"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "login"
+        in: "path"
+        description: "Login of user to be got."
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/User"
+        "400":
+          description: "Wrong login"
+        "404":
+          description: "User not found"
+    put:
+      tags:
+      - "user"
+      summary: "Updated user"
+      operationId: "update_user"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "login"
+        in: "path"
+        description: "name that need to be updated"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Updated user object"
+        required: true
+        schema:
+          $ref: "#/definitions/User"
+      responses:
+        "400":
+          description: "Wrong user given"
+        "404":
+          description: "User not found"
+    delete:
+      tags:
+      - "user"
+      summary: "Delete user"
+      operationId: "delete_user"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "login"
+        in: "path"
+        description: "The name that needs to be deleted"
+        required: true
+        type: "string"
+      responses:
+        "400":
+          description: "Wrong username"
+        "404":
+          description: "User not found"
+  /wallet:
+    post:
+      tags:
+      - "wallet"
+      summary: "Create wallet"
+      description: "Wallet creation interface"
+      operationId: "create_wallet"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "currency"
+        in: "query"
+        description: "Currency of wallet"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "successful operation"
+        405:
+          description: "invalid input"
+  /wallet/{id}:
+    get:
+      tags:
+      - "wallet"
+      summary: "Gets wallet by id"
+      description: ""
+      operationId: "get_wallet_by_id"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "Id of wallet to be got"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Wallet"
+        "400":
+          description: "Wrong id"
+        "404":
+          description: "Wallet not found"
+    delete:
+      tags:
+      - "wallet"
+      summary: "Deletes wallet by id"
+      description: "Only for wallet owner"
+      operationId: "delete_wallet_by_id"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "Id of wallet to be deleted"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Wallet"
+        "400":
+          description: "Wrong id"
+        "404":
+          description: "Wallet not found"
+  /pay/{wallet_id}:
+    post:
+      tags:
+      - "pay"
+      summary: "Pay somebody"
+      description: "Payment interfae"
+      operationId: "pay"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "wallet_id"
+        in: "path"
+        description: "Receiver wallet_id"
+        required: true
+        type: "string"
+      - name: "sener_wallet_id"
+        in: "query"
+        description: "Sender wallet_id"
+        required: true
+        type: "string"
+      - name: "amount"
+        in: "query"
+        description: "Amount"
+        required: true
+        type: "number"
+      responses:
+        200:
+          description: "successful operation"
+        405:
+          description: "invalid input"
+definitions:
+  User:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+      login:
+        type: "string"
+      pwd:
+        type: "string"
+    xml:
+      name: "User"
+  Wallet:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+      user_id:
+        type: "integer"
+        format: "int64"
+      currency: 
+        type: "string"
+      ballance:
+        type: "integer"
+    xml:
+      name: "Wallet"
+externalDocs:
+  description: "Find out more about Swagger"
+  url: "http://swagger.io"
