@@ -30,8 +30,8 @@ def get_user_by_id(user_id):
 def update_user_by_id(user_id):
     try:
         user_to_get = schemas.CreatingUser().load(request.json)
-        current_user = User(**user_to_get)
-        dbfun.update_user(user_id, current_user)
+        new_user = User(**user_to_get)
+        dbfun.update_user(user_id, new_user)
         return jsonify(schemas.ValidateError().dump(Error(200, "OK", "Ok")))
     except:
         return jsonify(schemas.ValidateError().dump(Error(400, "INVALID_INPUT", "Invalid input")))
@@ -46,7 +46,7 @@ def create_wallet():
     try:
         wallet_to_get = schemas.WalletToGet().load(request.json)
         wallet = Wallet(**wallet_to_get)
-        dbfun.create_model(wallet)
+        dbfun.create_model(wallet, Wallet)
         reply = Error(200, "OK", "OK")
         return jsonify(schemas.ValidateError().dump(reply))
     except:
@@ -73,7 +73,7 @@ def delete_wallet_by_id(wallet_id):
     dbfun.delete_model_by_id(Wallet, wallet_id )
     return jsonify(schemas.ValidateError().dump(Error(200, "OK", "OK")))
 
-@app.route('/wallet/user/<int:user_id>', methods=['GET'])
+@app.route('/wallet/users/<int:user_id>', methods=['GET'])
 def get_wallets_by_user_id(user_id):
     wallet_list = dbfun.list_wallet_for_user(user_id)
     return jsonify(schemas.WalletToSend().dump(wallet_list, many = True))
@@ -86,9 +86,11 @@ def create_transaction():
 
         if dbfun.get_model_by_id(Wallet, transaction.sender_wallet_id).ballance < transaction.amount:
             transaction.amount = 0
+        if dbfun.get_model_by_id(Wallet, transaction.sender_wallet_id).currency != dbfun.get_model_by_id(Wallet, transaction.recevier_wallet_id).currency:
+            transaction.amount = 0
 
         recevier_wallet = dbfun.get_model_by_id(Wallet, transaction.recevier_wallet_id)
-        recevier_wallet.ballance+=transaction.amount
+        recevier_wallet.ballance += transaction.amount
 
         sender_wallet = dbfun.get_model_by_id(Wallet, transaction.sender_wallet_id)
         sender_wallet.ballance -= transaction.amount
@@ -96,7 +98,7 @@ def create_transaction():
         dbfun.update_wallet(transaction.sender_wallet_id, sender_wallet)
         dbfun.update_wallet(transaction.recevier_wallet_id, recevier_wallet)
 
-        dbfun.create_model(transaction)
+        dbfun.create_model(transaction, Transaction)
         return jsonify(schemas.ValidateError().dump(Error(200, "OK", "OK")))
     except:
         return jsonify(schemas.ValidateError().dump(Error(400, "INVALID_INPUT", "Invalid input")))
@@ -106,7 +108,7 @@ def get_transaction_by_id(transaction_id):
     transaction = dbfun.get_model_by_id(Transaction, transaction_id)
     return jsonify(schemas.ValidateTransaction().dump(transaction))
 
-@app.route('/transaction/user/<int:user_id>', methods=['GET'])
+@app.route('/transaction/users/<int:user_id>', methods=['GET'])
 def get_transactions_by_user_id(user_id):
     transaction = dbfun.list_transactions_for_user(user_id)
     return jsonify(schemas.ValidateTransaction().dump(transaction, many=True))

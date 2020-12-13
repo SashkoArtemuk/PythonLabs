@@ -25,7 +25,7 @@ class WalletToSend(Schema):
 
 class ValidateTransaction(Schema):
     sender_wallet_id = fields.Integer()
-    receiver_wallet_id = fields.Integer()
+    recevier_wallet_id = fields.Integer()
     amount = fields.Integer()
 
 class ValidateError(Schema):

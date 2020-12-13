@@ -59,7 +59,7 @@ class Transaction(Base):
     send_from = orm.relationship(Wallet, foreign_keys=[sender_wallet_id], backref="transactions_from", lazy="joined")
     send_to = orm.relationship(Wallet, foreign_keys=[recevier_wallet_id], backref="transactions_to", lazy="joined")
 
-    def __init__(self, sender_wallet_id, receiver_wallet_id, amoung):
+    def __init__(self, sender_wallet_id, recevier_wallet_id, amount):
         self.sender_wallet_id = sender_wallet_id
-        self.recevier_wallet_id = receiver_wallet_id
-        self.amoung = amoung
+        self.recevier_wallet_id = recevier_wallet_id
+        self.amount = amount
