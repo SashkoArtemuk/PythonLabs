@@ -5,7 +5,19 @@ import schemas
 import dbfun
 from models import User, Wallet, Transaction
 from error import Error
+from flask_httpauth import HTTPBasicAuth
+import hashlib
+
 app = Flask(__name__)
+auth = HTTPBasicAuth()
+
+
+@auth.verify_password
+def verify_password(login, password):
+        user = dbfun.get_model_by_login(User, login)
+        if user and user.psw == hashlib.md5(password.encode()).hexdigest():
+            return user.id
+
 
 @app.route('/api/v1/hello-world-1')
 def hello_world():
@@ -22,12 +34,26 @@ def create_user():
         return jsonify(schemas.ValidateError().dump(Error(400, "INVALID_INPUT", "Invalid input")))
 
 @app.route('/users/<int:user_id>', methods=['GET'])
+@auth.login_required
 def get_user_by_id(user_id):
+    if user_id != auth.current_user():
+        return Response(
+                response=json.dumps({"message": "Forbidden"}),
+                status=403,
+                mimetype="application/json"
+            )
     user = dbfun.get_model_by_id(User, user_id)
     return jsonify(schemas.UserToSend().dump(user))
 
+@auth.login_required
 @app.route('/users/<int:user_id>', methods=['PUT'])
 def update_user_by_id(user_id):
+    if user_id != auth.current_user():
+        return Response(
+                response=json.dumps({"message": "Forbidden"}),
+                status=403,
+                mimetype="application/json"
+            )
     try:
         user_to_get = schemas.CreatingUser().load(request.json)
         new_user = User(**user_to_get)
@@ -37,7 +63,14 @@ def update_user_by_id(user_id):
         return jsonify(schemas.ValidateError().dump(Error(400, "INVALID_INPUT", "Invalid input")))
 
 @app.route('/users/<int:user_id>', methods=['DELETE'])
+@auth.login_required
 def delete_user_by_id(user_id):
+    if user_id != auth.current_user():
+        return Response(
+                response=json.dumps({"message": "Forbidden"}),
+                status=403,
+                mimetype="application/json"
+            )
     dbfun.delete_model_by_id(User, user_id)
     return jsonify(schemas.ValidateError().dump(Error(200, "OK", "Successful operation")))
 
@@ -52,37 +85,72 @@ def create_wallet():
     except:
         return jsonify(schemas.ValidateError().dump(Error(400, "INVALID_INPUT", "Invalid input")))
 
-@app.route('/wallet', methods=['PUT'])
-def update_wallet():
+@app.route('/wallet/<int:wallet_id>', methods=['PUT'])
+@auth.login_required
+def update_wallet(wallet_id):
     try:
+        if dbfun.get_model_by_id(Wallet, wallet_id).user_id != auth.current_user():
+            return Response(
+                response=json.dumps({"message": "Forbidden"}),
+                status=403,
+                mimetype="application/json"
+            )
         wallet_to_get = schemas.WalletToGet().load(request.json)
         wallet = Wallet(**wallet_to_get)
-        dbfun.update_wallet(wallet)
+        dbfun.update_wallet(wallet_id, wallet)
         reply = Error(200, "OK", "OK")
         return jsonify(schemas.ValidateError().dump(reply))
     except:
         return jsonify(schemas.ValidateError().dump(Error(400, "INVALID_INPUT", "Invalid input")))
 
 @app.route('/wallet/<int:wallet_id>', methods=['GET'])
+@auth.login_required
 def get_wallet_by_id(wallet_id):
+    if dbfun.get_model_by_id(Wallet, wallet_id).user_id != auth.current_user():
+        return Response(
+            response=json.dumps({"message": "Forbidden"}),
+            status=403,
+            mimetype="application/json"
+        )
     wallet_to_send = dbfun.get_model_by_id(Wallet, wallet_id)
     return jsonify(schemas.WalletToSend().dump(wallet_to_send))
 
 @app.route('/wallet/<int:wallet_id>', methods=['DELETE'])
+@auth.login_required
 def delete_wallet_by_id(wallet_id):
+    if dbfun.get_model_by_id(Wallet, wallet_id).user_id != auth.current_user():
+        return Response(
+            response=json.dumps({"message": "Forbidden"}),
+            status=403,
+            mimetype="application/json"
+        )
     dbfun.delete_model_by_id(Wallet, wallet_id )
     return jsonify(schemas.ValidateError().dump(Error(200, "OK", "OK")))
 
 @app.route('/wallet/users/<int:user_id>', methods=['GET'])
+@auth.login_required
 def get_wallets_by_user_id(user_id):
+    if user_id != auth.current_user():
+        return Response(
+            response=json.dumps({"message": "Forbidden"}),
+            status=403,
+            mimetype="application/json"
+        )
     wallet_list = dbfun.list_wallet_for_user(user_id)
     return jsonify(schemas.WalletToSend().dump(wallet_list, many = True))
 
 @app.route('/transaction', methods=['POST'])
+@auth.login_required
 def create_transaction():
     try:
         transaction_data = schemas.ValidateTransaction().load(request.json)
         transaction = Transaction(**transaction_data)
+        if dbfun.get_model_by_id(Wallet, transaction.sender_wallet_id).user_id != auth.current_user():
+            return Response(
+                response=json.dumps({"message": "Forbidden"}),
+                status=403,
+                mimetype="application/json"
+            )
 
         if dbfun.get_model_by_id(Wallet, transaction.sender_wallet_id).ballance < transaction.amount:
             transaction.amount = 0
@@ -104,17 +172,38 @@ def create_transaction():
         return jsonify(schemas.ValidateError().dump(Error(400, "INVALID_INPUT", "Invalid input")))
 
 @app.route('/transaction/<int:transaction_id>', methods=['GET'])
+@auth.login_required
 def get_transaction_by_id(transaction_id):
     transaction = dbfun.get_model_by_id(Transaction, transaction_id)
+    if transaction and transaction.sender_wallet_id != auth.current_user() and transaction.recevier_wallet_id != auth.current_user():
+        return Response(
+            response=json.dumps({"message": "Forbidden"}),
+            status=403,
+            mimetype="application/json"
+        )
     return jsonify(schemas.ValidateTransaction().dump(transaction))
 
 @app.route('/transaction/users/<int:user_id>', methods=['GET'])
+@auth.login_required
 def get_transactions_by_user_id(user_id):
+    if user_id != auth.current_user():
+        return Response(
+                response=json.dumps({"message": "Forbidden"}),
+                status=403,
+                mimetype="application/json"
+            )
     transaction = dbfun.list_transactions_for_user(user_id)
     return jsonify(schemas.ValidateTransaction().dump(transaction, many=True))
 
 @app.route('/wallet/<int:wallet_id>/transaction', methods=['GET'])
+@auth.login_required
 def get_transactions_by_wallet_id(wallet_id):
+    if dbfun.get_model_by_id(Wallet, wallet_id).user_id != auth.current_user():
+        return Response(
+            response=json.dumps({"message": "Forbidden"}),
+            status=403,
+            mimetype="application/json"
+        )
     transaction_list = dbfun.list_transactions_for_wallet(wallet_id)
     return jsonify(schemas.ValidateTransaction().dump(transaction_list, many=True))
 
@@ -132,6 +221,8 @@ def page_not_found(e):
 def method_not_allowed(e):
     reply = Error(404, "METHOD_NOT_ALLOWED", "Method not allowed")
     return jsonify(schemas.ValidateError().dump(reply))
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)

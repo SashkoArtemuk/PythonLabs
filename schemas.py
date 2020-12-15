@@ -17,7 +17,6 @@ class WalletToGet(Schema):
     ballance = fields.Integer()
 
 class WalletToSend(Schema):
-    id = fields.Integer()
     name = fields.String()
     user_id = fields.Integer()
     currency = fields.String()
