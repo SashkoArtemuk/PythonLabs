@@ -25,6 +25,10 @@ def update_wallet(wallet_id, wallet_data_to_update):
     wallet_in_db.ballance = wallet_data_to_update.ballance
     session.commit()
 
+def get_model_by_login(type, login):
+    session = Session()
+    return session.query(type).filter_by(login=login).first()
+
 def get_model_by_id(type, model_id):
     session = Session()
     return session.query(type).get(model_id)

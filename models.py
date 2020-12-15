@@ -5,7 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 import datetime
 
-DB_URI = os.getenv("DB_URI", "postgresql://postgres:12345678@localhost/sashkodbforpp")
+DB_URI = os.getenv("DB_URI", "postgresql://ppadmin:admin@localhost/ppdb")
 engine = create_engine(DB_URI)
 Session = sessionmaker(bind=engine)
 session = scoped_session(Session)
@@ -63,3 +63,6 @@ class Transaction(Base):
         self.sender_wallet_id = sender_wallet_id
         self.recevier_wallet_id = recevier_wallet_id
         self.amount = amount
+
+
+Base.metadata.create_all(engine)
