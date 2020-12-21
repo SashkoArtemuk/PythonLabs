@@ -19,9 +19,6 @@ def verify_password(login, password):
             return user.id
 
 
-@app.route('/api/v1/hello-world-1')
-def hello_world():
-    return 'Hello World - 1'
 
 @app.route('/users', methods=['POST'])
 def create_user():
@@ -31,7 +28,11 @@ def create_user():
         dbfun.create_model(user, User)
         return jsonify(schemas.ValidateError().dump(Error(200, "OK", "Ok")))
     except:
-        return jsonify(schemas.ValidateError().dump(Error(400, "INVALID_INPUT", "Invalid input")))
+        return Response(
+            response=json.dumps({"message": "Invalid input"}),
+            status=400,
+            mimetype="application/json"
+        )
 
 @app.route('/users/<int:user_id>', methods=['GET'])
 @auth.login_required
@@ -45,8 +46,9 @@ def get_user_by_id(user_id):
     user = dbfun.get_model_by_id(User, user_id)
     return jsonify(schemas.UserToSend().dump(user))
 
-@auth.login_required
+
 @app.route('/users/<int:user_id>', methods=['PUT'])
+@auth.login_required
 def update_user_by_id(user_id):
     if user_id != auth.current_user():
         return Response(
@@ -60,7 +62,11 @@ def update_user_by_id(user_id):
         dbfun.update_user(user_id, new_user)
         return jsonify(schemas.ValidateError().dump(Error(200, "OK", "Ok")))
     except:
-        return jsonify(schemas.ValidateError().dump(Error(400, "INVALID_INPUT", "Invalid input")))
+        return Response(
+            response=json.dumps({"message": "Invalid input"}),
+            status=400,
+            mimetype="application/json"
+        )
 
 @app.route('/users/<int:user_id>', methods=['DELETE'])
 @auth.login_required
@@ -83,7 +89,11 @@ def create_wallet():
         reply = Error(200, "OK", "OK")
         return jsonify(schemas.ValidateError().dump(reply))
     except:
-        return jsonify(schemas.ValidateError().dump(Error(400, "INVALID_INPUT", "Invalid input")))
+        return Response(
+            response=json.dumps({"message": "Invalid input"}),
+            status=400,
+            mimetype="application/json"
+        )
 
 @app.route('/wallet/<int:wallet_id>', methods=['PUT'])
 @auth.login_required
@@ -101,7 +111,11 @@ def update_wallet(wallet_id):
         reply = Error(200, "OK", "OK")
         return jsonify(schemas.ValidateError().dump(reply))
     except:
-        return jsonify(schemas.ValidateError().dump(Error(400, "INVALID_INPUT", "Invalid input")))
+        return Response(
+            response=json.dumps({"message": "Invalid input"}),
+            status=400,
+            mimetype="application/json"
+        )
 
 @app.route('/wallet/<int:wallet_id>', methods=['GET'])
 @auth.login_required
@@ -169,7 +183,11 @@ def create_transaction():
         dbfun.create_model(transaction, Transaction)
         return jsonify(schemas.ValidateError().dump(Error(200, "OK", "OK")))
     except:
-        return jsonify(schemas.ValidateError().dump(Error(400, "INVALID_INPUT", "Invalid input")))
+        return Response(
+            response=json.dumps({"message": "Invalid input"}),
+            status=400,
+            mimetype="application/json"
+        )
 
 @app.route('/transaction/<int:transaction_id>', methods=['GET'])
 @auth.login_required
